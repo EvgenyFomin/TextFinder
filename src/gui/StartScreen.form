@@ -75,7 +75,7 @@
         </constraints>
         <properties/>
       </component>
-      <scrollpane id="d5d93" binding="scrollPane">
+      <scrollpane id="d5d93" binding="treeScrollPane">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -98,19 +98,25 @@
           <text value="Search"/>
         </properties>
       </component>
-      <scrollpane id="6a953" binding="scrollTextPane">
+      <component id="cd4f3" class="javax.swing.JButton" binding="removeTabButton" default-binding="true">
         <constraints>
-          <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="6" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Remove Tab"/>
+          <verticalAlignment value="0"/>
+        </properties>
+      </component>
+      <tabbedpane id="c7d05" binding="tabbedPane" custom-create="true">
+        <constraints>
+          <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
         </constraints>
         <properties/>
         <border type="none"/>
-        <children>
-          <component id="efa85" class="javax.swing.JTextArea" binding="selectedFileContent">
-            <constraints/>
-            <properties/>
-          </component>
-        </children>
-      </scrollpane>
+        <children/>
+      </tabbedpane>
     </children>
   </grid>
 </form>

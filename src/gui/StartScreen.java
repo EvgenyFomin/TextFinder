@@ -1,7 +1,7 @@
 package gui;
 
+import logic.CreateChildNodes;
 import logic.FileNode;
-import logic.Launcher;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -11,8 +11,8 @@ import java.io.*;
 
 public class StartScreen extends Component {
     private final JFileChooser fileChooser;
-    private String rootDir = "";
-    private String path;
+    private String path = "";
+    private File file;
     private JTree tree;
     private JPanel rootPanel;
     private JTextField directoryField;
@@ -20,18 +20,23 @@ public class StartScreen extends Component {
     private JTextField extensionField;
     private JTextPane textPane;
     private JButton searchButton;
-    private JTextArea selectedFileContent;
-    private JScrollPane scrollPane;
-    private JScrollPane scrollTextPane;
+    private JScrollPane treeScrollPane;
+    private JButton removeTabButton;
+    private JTabbedPane tabbedPane;
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Finder");
-        frame.setContentPane(new StartScreen().rootPanel);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                JFrame frame = new JFrame("Finder");
+                frame.setContentPane(new StartScreen().rootPanel);
 
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                frame.setSize(800, 600);
 
-        frame.setVisible(true);
+                frame.setVisible(true);
+            }
+        });
     }
 
     private StartScreen() {
@@ -47,81 +52,108 @@ public class StartScreen extends Component {
             }
         });
 
-        searchButton.addActionListener(e -> {
-            rootDir = path;
-            selectedFileContent.setText("");
-            createUIComponents();
-        });
+        searchButton.addActionListener(e -> new Thread(new Search()).start());
+
+        removeTabButton.addActionListener(e -> tabbedPane.remove(tabbedPane.getSelectedComponent()));
     }
 
+
     private void createUIComponents() {
-        File fileRoot = new File(rootDir);
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootDir.equals("") ? "FreeTree" : new FileNode(fileRoot));
+        tabbedPane = new JTabbedPane();
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("EmptyTree");
         DefaultTreeModel treeModel = new DefaultTreeModel(root);
 
-        if (!rootDir.equals("")) {
-            Launcher.search(fileRoot, root, textPane.getText(), extensionField.getText());
-        }
+        tree = new JTree(treeModel);
+        tree.setEditable(true);
 
-        if (tree == null) {
-            tree = new JTree(treeModel);
-            tree.setEditable(true);
-            tree.addTreeSelectionListener(e -> {
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+        tree.addTreeSelectionListener(e -> {
+            DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
 
-                try {
-                    FileNode fileNode = (FileNode) selectedNode.getUserObject();
-                    if (fileNode.getFile().isFile()) {
-                        readFile(fileNode.getFile());
-                    }
-                } catch (Exception ignore) {
-
+            try {
+                FileNode fileNode = (FileNode) selectedNode.getUserObject();
+                if (fileNode.getFile().isFile()) {
+                    file = fileNode.getFile();
+                    new Thread(new FileReader()).start();
                 }
+            } catch (Exception ignore) {
 
-            });
-        } else {
+            }
+
+        });
+
+        tree.setModel(new DefaultTreeModel(root));
+    }
+
+    class Search implements Runnable {
+        @Override
+        public void run() {
+            File fileRoot = new File(path);
+            DefaultMutableTreeNode root = new DefaultMutableTreeNode(path.equals("") ? "EmptyTree" : new FileNode(fileRoot));
+            CreateChildNodes createChildNodes = new CreateChildNodes(fileRoot, root, textPane.getText(), extensionField.getText());
+
+            Thread createChildNodesThread = new Thread(createChildNodes);
+            createChildNodesThread.start();
+            try {
+                createChildNodesThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (root.getChildCount() == 0)
+                root = new DefaultMutableTreeNode("EmptyTree");
+
             tree.setModel(new DefaultTreeModel(root));
         }
     }
 
-    private void readFile(File file) {
-        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
-            StringBuilder str = new StringBuilder();
+    class FileReader implements Runnable {
+        @Override
+        public void run() {
+            try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+                StringBuilder str = new StringBuilder();
 
-            int count;
+                int count;
 
-            while ((count = inputStream.read()) != -1) {
-                str.append((char) count);
+                while ((count = inputStream.read()) != -1) {
+                    str.append((char) count);
+                }
+
+                JTextPane txtPane = new JTextPane();
+                txtPane.setText(str.toString());
+                JPanel txtPanel = new JPanel();
+                txtPanel.add(txtPane);
+
+                tabbedPane.addTab(file.getName(), new JScrollPane(txtPanel));
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-            selectedFileContent.setText(str.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Чтение быстрее, но добавление на форму сильно тормозит
+
+//            try (InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+//                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+//                StringBuilder str = new StringBuilder();
+//
+//                String line;
+//                while ((line = bufferedReader.readLine()) != null) {
+//                    str.append(line);
+//                    str.append("\n");
+//                }
+//
+//                String s = str.toString();
+//
+//                JTextPane txtPane = new JTextPane();
+//                txtPane.setText(str.toString());
+//                JPanel txtPanel = new JPanel();
+//                txtPanel.add(txtPane);
+//
+//                tabbedPane.addTab(file.getName(), new JScrollPane(txtPanel));
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         }
     }
-
-    // При использовании buffered reader на больших файлах, приложение бесконечно висит.
-
-//    private void readFile2(File file) {
-//        try (InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
-//             BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-//            StringBuilder str = new StringBuilder();
-//
-//            long start = System.currentTimeMillis();
-//            String line;
-//            while ((line = bufferedReader.readLine()) != null) {
-//                str.append(line);
-//                str.append("\n");
-//            }
-//
-//            long end = System.currentTimeMillis();
-//
-//            System.out.println(end - start);
-//
-//            selectedFileContent.setText(str.toString());
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

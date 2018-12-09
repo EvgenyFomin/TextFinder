@@ -9,7 +9,7 @@ import java.util.*;
 class Search {
     Map<String, List<String>> execute(String root, String fileExtension, String text) {
         List<File> resultFileList = new LinkedList<>();
-        List<File> fileList = findAllInnerFiles(root, fileExtension);
+        List<File> fileList = findAllInnerFilesWithText(root, fileExtension);
 
         for (File currentFile : fileList) {
             if (fileContainsText(currentFile.getAbsolutePath(), text)) {
@@ -20,7 +20,6 @@ class Search {
         return createMyTreeModel(resultFileList, root);
     }
 
-
     private boolean fileContainsText(String fileName, String text) {
         try {
             return new String(Files.readAllBytes(Paths.get(fileName))).contains(text);
@@ -30,7 +29,7 @@ class Search {
         }
     }
 
-    private List<File> findAllInnerFiles(String root, String fileExtension) {
+    private List<File> findAllInnerFilesWithText(String root, String fileExtension) {
         File rootDir = new File(root);
         List<File> result = new ArrayList<>();
         Queue<File> fileTree = new PriorityQueue<>();
@@ -50,7 +49,6 @@ class Search {
             } else if (getFileExtension(currentFile.getAbsolutePath()).equals(fileExtension)) {
                 result.add(currentFile);
             }
-
         }
 
         return result;
