@@ -25,17 +25,14 @@ public class StartScreen extends Component {
     private JTabbedPane tabbedPane;
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                JFrame frame = new JFrame("Finder");
-                frame.setContentPane(new StartScreen().rootPanel);
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Finder");
+            frame.setContentPane(new StartScreen().rootPanel);
 
-                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                frame.setSize(800, 600);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setSize(800, 600);
 
-                frame.setVisible(true);
-            }
+            frame.setVisible(true);
         });
     }
 
@@ -108,6 +105,8 @@ public class StartScreen extends Component {
     }
 
     class FileReader implements Runnable {
+        java.util.List<String> lines;
+
         @Override
         public void run() {
             try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
@@ -130,19 +129,23 @@ public class StartScreen extends Component {
                 e.printStackTrace();
             }
 
-            // Чтение быстрее, но добавление на форму сильно тормозит
+            /*
+             * Чтение файлов быстрее, но некоторые файлы могут очень долго добавляться на форму.
+             * По какой-то причине, добавление текста на форму после чтения BufferedInputStream'ом, работает всегда хорошо.
+             * Однако, некоторые файлы очень долго добавляются, после чтения BufferedReader'ом или Files.readAllLines'ом.
+             */
 
-//            try (InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
-//                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+//            Path wiki_path = Paths.get(file.getAbsolutePath());
+//
+//            Charset charset = Charset.forName("UTF-8");
+//            try {
+//                lines = Files.readAllLines(wiki_path, charset);
 //                StringBuilder str = new StringBuilder();
 //
-//                String line;
-//                while ((line = bufferedReader.readLine()) != null) {
-//                    str.append(line);
+//                for (String currentString : lines) {
+//                    str.append(currentString);
 //                    str.append("\n");
 //                }
-//
-//                String s = str.toString();
 //
 //                JTextPane txtPane = new JTextPane();
 //                txtPane.setText(str.toString());
